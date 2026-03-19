@@ -196,6 +196,64 @@ tr.shimmer td{color:var(--dim);animation:pulse .9s infinite;}
 @media(prefers-reduced-motion:reduce){
   .dot.live,.dot.loading,tr.shimmer td,.score-bar-fill{animation:none;transition:none;}
 }
+/* ── TOOLTIPS (CSS-only for non-header cells) ────────────── */
+.tip{position:relative;cursor:help;}
+.tip .tiptext{
+  visibility:hidden;opacity:0;
+  position:absolute;z-index:50;
+  bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+  background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:9px 13px;font-size:.72rem;line-height:1.6;
+  white-space:normal;min-width:200px;max-width:320px;color:var(--text);
+  box-shadow:0 8px 24px rgba(0,0,0,.65);
+  transition:opacity .15s;pointer-events:none;
+  font-family:'IBM Plex Mono',monospace;font-weight:400;
+}
+.tip:hover .tiptext{visibility:visible;opacity:1;}
+/* Header tooltips bypass overflow via fixed JS floater — hide native tiptext */
+th .tiptext{display:none !important;}
+/* Shared fixed floater (position set by JS) */
+#th-tip-floater{
+  position:fixed;z-index:9999;display:none;
+  background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:9px 13px;font-size:.72rem;line-height:1.6;
+  color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.65);
+  max-width:320px;white-space:normal;pointer-events:none;
+  font-family:'IBM Plex Mono',monospace;
+}
+/* ── COLLAPSIBLE TOGGLES ─────────────────────────────────── */
+.ci{display:inline-block;transition:transform .2s;font-size:.7rem;}
+.collapse-btn{
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;
+  background:none;border:none;color:var(--text2);
+  font-family:'Chakra Petch',sans-serif;
+  font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  padding:6px 0;transition:color .15s;
+}
+.collapse-btn:hover{color:var(--cyan);}
+/* ── 3-COLUMN LEGEND ─────────────────────────────────────── */
+.legend-3col{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:10px;}
+.legend-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;transition:border-color .2s;}
+.legend-box:hover{border-color:var(--border2);}
+.legend-box-title{font-size:.72rem;font-weight:700;color:var(--cyan2);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;}
+.legend-box-item{font-size:.72rem;color:var(--text2);margin:3px 0;line-height:1.5;}
+/* ── ENHANCED HOVER EFFECTS ──────────────────────────────── */
+.sig-card:hover{border-color:var(--cyan) !important;box-shadow:0 0 16px rgba(0,212,255,.1);}
+.sig-row{cursor:default;transition:background .1s;}
+.sig-row:hover{background:rgba(30,38,64,.35);}
+.bot-card:hover{border-color:var(--border2);box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.legend-item{transition:border-color .2s,background .2s;}
+.legend-item:hover{border-color:var(--border2);background:var(--bg3);}
+.sym-chip{cursor:default;transition:border-color .15s,background .15s;}
+.sym-chip:hover{border-color:var(--cyan2);background:var(--bg2);}
+.score-table tr:hover td{background:rgba(30,38,64,.4);}
+/* ── FOOTER ──────────────────────────────────────────────── */
+#footer{
+  border-top:1px solid var(--border);padding:10px 20px;
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--dim);
+  flex-wrap:wrap;gap:6px;position:relative;z-index:1;margin-top:4px;
+}
 </style>
 </head>
 <body>
@@ -234,13 +292,31 @@ tr.shimmer td{color:var(--dim);animation:pulse .9s infinite;}
   <div class="table-wrap">
     <table>
       <thead><tr>
-        <th>Symbol</th><th>Price</th><th>Fund%</th><th>RSI 4H</th><th>ATR 4H</th>
-        <th>Flow% 24h</th><th>POC 5d</th><th>POC 14d</th>
-        <th>AVWAP 5d</th><th>AVWAP 14d</th><th>AVWAP 30d</th>
-        <th>CVD 5d</th><th>CVD 14d</th><th>CVD 30d</th>
-        <th>OI</th><th>OI% 7d</th><th>Str 4H</th><th>Str 30d</th>
-        <th>EMA 50</th><th>EMA 200</th><th>Trend</th><th>Conf</th>
-        <th>Sweep</th><th>FVG Nearest</th><th>API</th>
+        <th>Symbol</th>
+        <th><span class="tip">Price<span class="tiptext">Mark price in USDT. Binance Futures primary, Bybit fallback. Updated every 20 min.</span></span></th>
+        <th><span class="tip">Fund%<span class="tiptext">Funding rate (8h). Positive = longs pay shorts — bearish pressure. Negative = shorts pay longs — bullish bias. Extreme >0.1% = crowded trade, mean-reversion risk.</span></span></th>
+        <th><span class="tip">RSI 4H<span class="tiptext">Relative Strength Index on 4H candles (14 periods). >70 = overbought (avoid longs). <30 = oversold (avoid shorts). Best trend entries: 45–55 in direction.</span></span></th>
+        <th><span class="tip">ATR 4H<span class="tiptext">Average True Range on 4H (14 periods). Volatility measure. SL = 1.5×ATR · TP1 = 3×ATR · TP2 = 5.25×ATR from entry price.</span></span></th>
+        <th><span class="tip">Flow% 24h<span class="tiptext">Buy/sell pressure over 24 one-hour candles. Formula: (BuyVol − SellVol) / TotalVol × 100. >+5% = buy dominant. <−5% = sell dominant.</span></span></th>
+        <th><span class="tip">POC 5d<span class="tiptext">Point of Control — 5-day highest-volume price zone. Price magnet. Price above = acts as support. Price below = acts as resistance.</span></span></th>
+        <th><span class="tip">POC 14d<span class="tiptext">Point of Control — 14-day highest-volume price zone. Stronger institutional reference. POC5d ≈ POC14d = Confluence zone [YES in Conf column].</span></span></th>
+        <th><span class="tip">AVWAP 5d<span class="tiptext">Anchored VWAP — 5 days. Volume-weighted average price: institutional short-term reference. Price above = bullish short-term bias.</span></span></th>
+        <th><span class="tip">AVWAP 14d<span class="tiptext">Anchored VWAP — 14 days. Medium-term institutional reference. Price below = medium-term bearish bias. Used in Trend Macro scoring.</span></span></th>
+        <th><span class="tip">AVWAP 30d<span class="tiptext">Anchored VWAP — 30 days. Macro institutional baseline. Price above all 3 AVWAPs (5d/14d/30d) = confirmed macro bull regime.</span></span></th>
+        <th><span class="tip">CVD 5d<span class="tiptext">Cumulative Volume Delta — 5 days. BuyVol minus SellVol accumulated. [ACC] = net buying pressure (bullish). [DIS] = net selling pressure (bearish).</span></span></th>
+        <th><span class="tip">CVD 14d<span class="tiptext">Cumulative Volume Delta — 14 days. Medium-term smart-money flow. All three CVDs [DIS] = FULL DISTRIB — strong bear confirmation.</span></span></th>
+        <th><span class="tip">CVD 30d<span class="tiptext">Cumulative Volume Delta — 30 days. Macro flow. All three CVDs [ACC] = FULL ACCUM — high-confidence bull environment. Overrides shorter signals.</span></span></th>
+        <th><span class="tip">OI<span class="tiptext">Open Interest — total active futures contracts (in coins). Absolute snapshot at refresh time. Use OI% 7d for trend direction.</span></span></th>
+        <th><span class="tip">OI% 7d<span class="tiptext">Open Interest change over 7 days. OI↑+Price↑ = real bull (new longs). OI↑+Price↓ = shorts building → squeeze risk. OI↓+Price↓ = real bear (longs exiting).</span></span></th>
+        <th><span class="tip">Str 4H<span class="tiptext">Market structure on 4H (last 20 candles). Bullish = HH+HL. Bearish = LH+LL. Neutral = no clear pivot sequence detected.</span></span></th>
+        <th><span class="tip">Str 30d<span class="tiptext">Market structure on 30-day view (40 candles). Macro structure. Conflict with Str 4H = elevated risk — reduce position size.</span></span></th>
+        <th><span class="tip">EMA 50<span class="tiptext">EMA50 on 4H candles. Dynamic support in uptrend, resistance in downtrend. Green = price above EMA50. Red = price below.</span></span></th>
+        <th><span class="tip">EMA 200<span class="tiptext">EMA200 on 4H. Long-term trend baseline. EMA50 > EMA200 = Golden Cross regime (bull). EMA50 < EMA200 = Death Cross (bear).</span></span></th>
+        <th><span class="tip">Trend<span class="tiptext">Price vs AVWAP5d. [UP] = above short-term institutional average (bullish bias). [DN] = below (bearish bias). Quick pulse check.</span></span></th>
+        <th><span class="tip">Conf<span class="tiptext">POC Confluence. [YES] = POC5d and POC14d within 0.5% of each other. Confluent POC zones attract price and provide stronger S/R.</span></span></th>
+        <th><span class="tip">Sweep<span class="tiptext">Liquidity sweep on latest 4H candle. BUY_SWP = lows swept then reclaimed → smart money absorbed sellers (bullish reversal). SELL_SWP = highs swept then rejected (bearish).</span></span></th>
+        <th><span class="tip">FVG Nearest<span class="tiptext">Nearest Fair Value Gap on last 100 4H candles. B-FVG = bullish imbalance (support). S-FVG = bearish imbalance (resistance). IN = price inside gap. d = distance % to gap midpoint.</span></span></th>
+        <th><span class="tip">API<span class="tiptext">Data source. BN = Binance Futures (fapi.binance.com). BB = Bybit V5 (api.bybit.com). Bybit CVD uses Williams %R volume approximation when taker buy vol unavailable.</span></span></th>
       </tr></thead>
       <tbody id="main-tbody">
         <tr><td colspan="25" class="empty">Loading data…</td></tr>
@@ -263,12 +339,22 @@ tr.shimmer td{color:var(--dim);animation:pulse .9s infinite;}
   <div class="table-wrap">
     <table class="score-table">
       <thead><tr>
-        <th>Asset</th><th>Score / 10</th><th>Bar</th><th>Direction</th><th>Leverage</th><th>Status</th>
+        <th>Asset</th>
+        <th><span class="tip">Score / 10<span class="tiptext">Composite score 0–10. Weights: Trend Macro +2 · Pressure +2 · Setup +2 · Trend Swing +1.5 · CVD Quality +1 · EMA +0.5 · FVG +0.5 · POC Confluence +0.5. Penalties for RSI extreme, OI squeeze, structure conflict.</span></span></th>
+        <th><span class="tip">Bar<span class="tiptext">Visual score bar. Green = strong (8–10) · Yellow = moderate (6–7.9) · Red = weak (&lt;6).</span></span></th>
+        <th><span class="tip">Direction<span class="tiptext">Bias determined by macro trend analysis. LONG = 3+ of 4 bull conditions met (AVWAP14d, AVWAP30d, Structure30d, CVD30d). SHORT = 3+ bear conditions.</span></span></th>
+        <th><span class="tip">Leverage<span class="tiptext">Suggested max leverage based on score. ≥9.5 = 5x · ≥9.0 = 4x · ≥8.5 = 3x · ≥8.0 = 2x. Always adjust to your own risk tolerance.</span></span></th>
+        <th><span class="tip">Status<span class="tiptext">Bot activation status. ★ ACTIVE = score ≥8.0 — bot parameters generated below. Waiting = below threshold, no trade yet.</span></span></th>
       </tr></thead>
       <tbody id="score-tbody"><tr><td colspan="6" class="empty">—</td></tr></tbody>
     </table>
   </div>
-  <div id="score-details"></div>
+  <button id="toggle-details-btn" class="btn" onclick="toggleScoreDetails()"
+    style="margin-top:10px;display:inline-flex;align-items:center;gap:6px">
+    <span class="ci" id="details-ci">▶</span>
+    <span id="details-btn-text">Show Score Breakdown</span>
+  </button>
+  <div id="score-details" style="display:none"></div>
 </div>
 
 <!-- BOT PARAMS -->
@@ -281,8 +367,58 @@ tr.shimmer td{color:var(--dim);animation:pulse .9s infinite;}
 
 <!-- LEGEND -->
 <div class="section">
-  <div class="section-title">Indicator Legend</div>
-  <div class="legend-grid" id="legend-grid"></div>
+  <div class="section-title">Reference Guide</div>
+
+  <!-- 3-box quick-reference row -->
+  <div class="legend-3col">
+    <div class="legend-box">
+      <div class="legend-box-title">Color Guide</div>
+      <div class="legend-box-item"><span class="bull">■</span> Green = Bullish · Accumulation · Oversold entry</div>
+      <div class="legend-box-item"><span class="bear">■</span> Red = Bearish · Distribution · Overbought exit</div>
+      <div class="legend-box-item"><span class="warn">■</span> Yellow = Caution · Divergence · Watch</div>
+      <div class="legend-box-item"><span class="neutral">■</span> Gray = Neutral · No clear signal</div>
+      <div class="legend-box-item" style="margin-top:6px">
+        Score: <span class="s-high">8–10</span> Strong ·
+        <span class="s-mid">6–7.9</span> Moderate ·
+        <span class="s-low">&lt;6</span> Avoid
+      </div>
+    </div>
+    <div class="legend-box">
+      <div class="legend-box-title">Quick Reference</div>
+      <div class="legend-box-item">RSI &lt;30 = Oversold entry · &gt;70 = Overbought exit</div>
+      <div class="legend-box-item">Flow &gt;+5% = Buy dominant · &lt;−5% = Sell dominant</div>
+      <div class="legend-box-item">OI↑+Price↑ = Real bull · OI↑+Price↓ = Squeeze risk</div>
+      <div class="legend-box-item">CVD all [ACC] = Full Accumulation (high-confidence)</div>
+      <div class="legend-box-item">POC Conf [YES] = POC5d ≈ POC14d → strong S/R zone</div>
+      <div class="legend-box-item" style="margin-top:4px;color:var(--cyan2)">Score ≥ 8.0 → Bot parameters activated</div>
+    </div>
+    <div class="legend-box">
+      <div class="legend-box-title">Score Weights</div>
+      <div class="legend-box-item">Trend Macro (AVWAP/Str/CVD30d) — up to +2.0</div>
+      <div class="legend-box-item">Pressure (Flow + OI + CVD5d) — up to +2.0</div>
+      <div class="legend-box-item">Setup (Sweep / POC confluence) — up to +2.0</div>
+      <div class="legend-box-item">Trend Swing (AVWAP5d + Flow) — up to +1.5</div>
+      <div class="legend-box-item">CVD Quality (5d/14d/30d alignment) — up to +1.0</div>
+      <div class="legend-box-item">EMA · FVG · POC Conf — +0.5 each</div>
+      <div class="legend-box-item" style="margin-top:4px;color:var(--red)">Penalties: RSI extreme · OI squeeze · Struct conflict</div>
+    </div>
+  </div>
+
+  <!-- Collapsible indicator glossary -->
+  <div>
+    <button class="collapse-btn" onclick="toggleGlossary()">
+      <span class="ci" id="glossary-ci">▶</span>
+      Indicator Glossary
+      <span style="font-size:.65rem;opacity:.5;margin-left:4px;text-transform:none;letter-spacing:0">— click to expand</span>
+    </button>
+    <div id="legend-grid" style="display:none;margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer">
+  <span>Sources: Binance Futures (fapi.binance.com) · Bybit V5 (api.bybit.com)</span>
+  <span>All indicators calculated client-side · 4H timeframe · Refresh every 20 min</span>
 </div>
 
 <!-- MODAL -->
@@ -959,11 +1095,26 @@ function buildTableRow(name, m, prov) {
 }
 
 // ── Signal card ───────────────────────────────────────────────────
+// Static category tooltips — explain what each signal category measures
+const SIG_TIPS = {
+  'Trend Macro':     'Macro trend (30d). Checks price vs AVWAP14d/30d, CVD30d, and Structure30d. 3 of 4 conditions = confirmed direction.',
+  'Trend Swing':     'Swing trend (5d). Checks price vs AVWAP5d, CVD5d, and 24h Flow together. DIV signals warn of potential reversals.',
+  'Presiune':        'Buy/sell pressure. Combines 24h Flow, 7d OI change, and CVD5d. SQUEEZE RISK = positive flow + OI falling (short flush).',
+  'Calitate Trend':  'CVD alignment across all 3 horizons (5d/14d/30d). FULL ACCUM = all positive = high-confidence bull signal.',
+  'Setup':           'Entry signal quality. Liquidity sweep + flow + OI = best setup. POC near + CVD + structure = secondary entry.',
+  'Risc':            'Risk level. HIGH = RSI extreme + extreme flow. MEDIUM = structure timeframe conflict or OI/flow accelerating together.',
+  'Bot Grid':        'Grid bot suitability. RECOMMENDED when CVD5d is lateral (low delta) + no strong directional trend present.',
+  'FVG':             'Fair Value Gap proximity (last 100 4H candles). ★ = structure confirms. FILLING = price entering the imbalance zone.',
+  'EMA Trend':       'EMA50 vs EMA200 relationship on 4H. BULL/PULLBACK = in bull trend but pulling back to EMA50 (potential entry zone).',
+  'Vol Spike':       'Volume spike detection vs 20-candle average (≥2× = spike). Bull spike above AVWAP5d = breakout. Bear spike below = breakdown.',
+};
+
 function buildSigCard(name, price, signals, prov) {
   const cats = ['Trend Macro','Trend Swing','Presiune','Calitate Trend','Setup','Risc','Bot Grid','FVG','EMA Trend','Vol Spike'];
   const rows = cats.map(cat => {
     const [val,cls,desc] = signals[cat] || ["–","neutral","—"];
-    return `<div class="sig-row"><span class="sig-cat">${cat}</span><span class="sig-val">${sigValHtml(val,cls)}</span><span class="sig-desc">${desc}</span></div>`;
+    const tip = SIG_TIPS[cat] ? ` title="${SIG_TIPS[cat]}"` : '';
+    return `<div class="sig-row"><span class="sig-cat" style="cursor:help"${tip}>${cat}</span><span class="sig-val">${sigValHtml(val,cls)}</span><span class="sig-desc">${desc}</span></div>`;
   }).join('');
   const mc = signals['Trend Macro']?.[1];
   const pc = mc==='bull'?'var(--green)':mc==='bear'?'var(--red)':'var(--cyan)';
@@ -1002,7 +1153,13 @@ function buildScoreDetail(name, score, direction, detail) {
     <div style="font-size:.72rem;font-weight:700;margin-bottom:7px;color:var(--text)">
       ${name} — Score: <span class="${scClass(score)}">${score.toFixed(2)}/10</span>
       &nbsp;|&nbsp; Direction: <strong>${direction||"—"}</strong>
-    </div>${rows}
+    </div>
+    <div class="detail-row" style="border-bottom:1px solid var(--border2);margin-bottom:3px;padding-bottom:4px">
+      <span class="detail-val" style="color:var(--text2);font-size:.67rem;font-weight:500">PTS</span>
+      <span class="detail-comp" style="color:var(--text2);font-size:.67rem;font-weight:500">COMPONENT</span>
+      <span class="detail-reason" style="color:var(--text2);font-size:.67rem;font-weight:500">REASON / VALUES</span>
+    </div>
+    ${rows}
   </div>`;
 }
 
@@ -1224,6 +1381,89 @@ function showModal() {
 }
 function hideModal() { document.getElementById('modal-overlay').classList.remove('show'); }
 document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target===e.currentTarget) hideModal(); });
+
+// ══════════════════════════════════════════════════════════════════
+//  SCORE BREAKDOWN TOGGLE
+// ══════════════════════════════════════════════════════════════════
+function toggleScoreDetails() {
+  const details = document.getElementById('score-details');
+  const ci      = document.getElementById('details-ci');
+  const btnText = document.getElementById('details-btn-text');
+  if (details.style.display === 'none') {
+    details.style.display = 'block';
+    ci.textContent = '▼';
+    btnText.textContent = 'Hide Score Breakdown';
+  } else {
+    details.style.display = 'none';
+    ci.textContent = '▶';
+    btnText.textContent = 'Show Score Breakdown';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  GLOSSARY TOGGLE
+// ══════════════════════════════════════════════════════════════════
+function toggleGlossary() {
+  const grid = document.getElementById('legend-grid');
+  const ci   = document.getElementById('glossary-ci');
+  if (grid.style.display === 'none') {
+    grid.style.display = 'grid';
+    ci.textContent = '▼';
+  } else {
+    grid.style.display = 'none';
+    ci.textContent = '▶';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  HEADER TOOLTIP FLOATER
+//  Uses position:fixed to bypass overflow-x:auto clipping on the
+//  main metrics table — the same technique as the XTB dashboard.
+// ══════════════════════════════════════════════════════════════════
+(function () {
+  // Single shared floater div appended once to <body>
+  const floater = document.createElement('div');
+  floater.id = 'th-tip-floater';
+  document.body.appendChild(floater);
+
+  function showFloater(tipEl, anchorEl) {
+    floater.innerHTML = tipEl.innerHTML;
+    floater.style.display = 'block';
+
+    // Position below anchor, clamped to viewport edges
+    const r  = anchorEl.getBoundingClientRect();
+    const fw = floater.offsetWidth;
+    const fh = floater.offsetHeight;
+    let left = r.left + r.width / 2 - fw / 2;
+    let top  = r.bottom + 6;
+
+    // Clamp horizontal
+    left = Math.max(6, Math.min(left, window.innerWidth - fw - 6));
+    // Flip above if not enough room below
+    if (top + fh > window.innerHeight - 6) top = r.top - fh - 6;
+
+    floater.style.left = left + 'px';
+    floater.style.top  = top  + 'px';
+  }
+
+  // Attach to all th .tip elements — called on load and after each render
+  function attachHeaderTips() {
+    document.querySelectorAll('th .tip').forEach(tip => {
+      if (tip._thTipBound) return; // avoid duplicate listeners
+      tip._thTipBound = true;
+      const tiptext = tip.querySelector('.tiptext');
+      if (!tiptext) return;
+      tip.addEventListener('mouseenter', () => showFloater(tiptext, tip));
+      tip.addEventListener('mouseleave', () => { floater.style.display = 'none'; });
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', attachHeaderTips);
+
+  // Re-attach after dynamic content renders (score table headers are static
+  // but the main table is always present, so one call on DOMContentLoaded suffices)
+  window._attachHeaderTips = attachHeaderTips;
+})();
 
 // ══════════════════════════════════════════════════════════════════
 //  INIT  — render legend, chips, then auto-start fetch
