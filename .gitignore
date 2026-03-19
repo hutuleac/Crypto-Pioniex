@@ -1,0 +1,4 @@
+.planning/
+*.py
+.DS_Store
+Thumbs.db
